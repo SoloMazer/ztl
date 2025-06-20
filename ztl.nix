@@ -5,7 +5,8 @@ pkgs.writeShellApplication {
   runtimeInputs = with pkgs; [
     coreutils
     fzf
-    papers
+    typst
+    tinymist
   ];
 
   text = ''
@@ -13,152 +14,141 @@ pkgs.writeShellApplication {
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Utility functions
-
-fail() {
-  echo "Error: $*" >&2
-  exit 1
-}
-
 show_help() {
-cat <<EOF
-Usage: ztl [OPTIONS]
+cat << EOF
+Usage: ztl [COMMAND]
 
-Options:
-  init                        Initialize a new vault in the current directory
-  --new, -n <file-name>       Create a new Typst file with boilerplate
-  --compile, -c               Compile, watch and open the file in viewer
-  --help                      Show this help message
+Commands:
+  init                    Initialize vault with current directory as vault root
+  new/n <filename>        Create new file at working directory
+  help                    Show this help message
 EOF
 }
 
-find_vault_root() {
-  local dir="$PWD"
-  while [ "$dir" != "/" ]; do
-    if [ -d "$dir/vault" ]; then
-      echo "$dir/vault"
-      return
-    fi
-    dir="$(dirname "$dir")"
-  done
-  return 1
-}
+# Initialization function
+init_vault() {
 
-# Boilerplate functions
+  if [ -d "$(pwd)/vault" ]; then
+    echo "Error: Vault is already Initialized."
+    echo "Use 'ztl repair' to regenerate the vault"
+    exit 1
+  fi
 
-vault_home_broilerplate() {
-cat <<EOF > "$VAULT_DIR/vault.typ"
+  # create vault resources
+  mkdir "$(pwd)/vault"                   #create a folder to store vault files
+  touch "$(pwd)/vault/vault.typ"         #create a vault.typ file for basalt-lib
+  touch "$(pwd)/vault/vault.csv"         #create a csv file to store note paths
+  touch "$(pwd)/vault/snippets.typ"      #create a global snippets file
+  mkdir "$(pwd)/vault/templates"         #create a folder to store templates
+
+# Setup vault.typ with some broilerplate for basalt-lib
+cat << 'VAULT_FILE_BROILERPLATE' > "$(pwd)/vault/vault.typ"
 #import "@preview/basalt-lib:1.0.0": new-vault, xlink, as-branch
+#import "./snippets.typ"
 
 #let vault = new-vault(
-  note-paths: csv("note-paths.csv").flatten(),
+  note-paths: csv("./vault.csv").flatten(),
   include-from-vault: path => include path,
-  formatters: (),
+  formatters: ()
 )
+VAULT_FILE_BROILERPLATE
+
+# Cat some broilerplate code to snippets.typ
+cat << 'VAULT_SNIPPETS_BROILERPLATE' > "$(pwd)/vault/snippets.typ"
+// Define your global snippet varibables here, eg:
+// #let pi = 3.14159
+VAULT_SNIPPETS_BROILERPLATE
+
+# Display vault init log to console
+cat << EOF
+Initialization complete.
+  Vault Root:        $(pwd)
 EOF
 }
 
-new_file_broilerplate() {
-  local filename="$1"
-  local basename="$2"
-  local rel_path="$3"
+locate_vault_root() {
+  local CURRENT_DIR
+  CURRENT_DIR=$(pwd)
+  while true; do
+    if [ -d "$CURRENT_DIR/vault" ]; then
+      echo "$CURRENT_DIR"
+      return 0
+    elif [ "$CURRENT_DIR" == "$HOME" ]; then
+      return 1
+    fi
+    CURRENT_DIR=$(dirname "$CURRENT_DIR")
+  done
+}
+
+create_new_file(){
+  local vault_home="$1/vault"
+  local filename="$3.typ"
+  local relative_csv
+  local relative_typ
+
+  if [ -e "$filename" ]; then
+    echo "Error: '$filename' already exists. Choose a different name."
+    exit 1
+  fi
+  
   mkdir -p "$(dirname "$filename")"
-
-cat <<EOF > "$filename"
-#import "$rel_path/vault.typ": *
-#import "$rel_path/snippets.typ"
+  touch "$filename"
+  relative_typ="$(realpath --relative-to="$(dirname "$(pwd)"/"$filename")" "$vault_home")/vault.typ"
+  
+# Setup new file with some broilerplate for basalt-lib
+cat << NEW_FILE_BROILERPLATE > "$filename"
+#import "$relative_typ": *
 #show: vault.new-note.with(
-  name: "$basename"
+  name: "note1",
+  //other metadata here
 )
-//Insightful note content
-EOF
+
+Insightful note content...
+NEW_FILE_BROILERPLATE
+
+  relative_csv=$(realpath --relative-to="$vault_home" "$(pwd)/$filename")
+
+  grep -qxF "$relative_csv" "$vault_home/vault.csv" || echo "$relative_csv" >> "$vault_home/vault.csv"
+  sort -ubfV "$vault_home/vault.csv" -o "$vault_home/vault.csv"
+
+  echo "Succesfully Added $filename to the vault: $(dirname "$vault_home")."
 }
-
-# Option functions
-
-init_vault() {
-  [ ! -d "$VAULT_DIR" ] || fail "Vault is already initialized."
-  mkdir -p "$VAULT_DIR"
-  vault_home_broilerplate
-  touch "$PATH_CSV"
-  touch "$VAULT_DIR/snippets.typ"
-}
-
-create_new_file() {
-  local name="$1"
-  local filename="$name.typ"
-  local basename
-  local note_dir
-  local rel_path
-
-  [ -d "$VAULT_DIR" ] || fail "Vault not initialized. Run 'ztl init'."
-  [ -f "$filename" ] && fail "$filename already exists."
-
-  basename="$(basename "$name")"
-  note_dir="$(dirname "$filename")"
-  rel_path="$(realpath --relative-to="$note_dir" "$VAULT_DIR")"
-
-  new_file_broilerplate "$filename" "$basename" "$rel_path"
-
-  relative_to_vault="$(realpath --relative-to="$(dirname "$PATH_CSV")" "$filename")"
-  note_path="./$relative_to_vault"
-
-  grep -qxF "$note_path" "$PATH_CSV" || echo "$note_path" >> "$PATH_CSV"
-  sort -u "$PATH_CSV" -o "$PATH_CSV"
-}
-
-compile_file() {
-  [ -d "$VAULT_DIR" ] || fail "Vault not initialized. Run 'ztl --init'."
-  [ -f "$PATH_CSV" ] || fail "No note-paths.csv found."
-
-  local selected abs_path
-  selected=$(fzf < "$PATH_CSV") || fail "No file selected."
-
-  abs_path="$(realpath --canonicalize-missing "$(dirname "$PATH_CSV")/$selected")"
-
-  typst compile --root "$(dirname "$VAULT_DIR")" "$abs_path" || fail "Typst compile failed."
-
-  typst watch "$abs_path" --root "$(dirname "$VAULT_DIR")" --open || fail "Typst watch failed."
-}
-
-# Main function
 
 main() {
   if [ "$#" -eq 0 ]; then
     show_help
     exit 1
   fi
-
   case "$1" in
     init)
-      VAULT_DIR="$PWD/vault"
-      PATH_CSV="$VAULT_DIR/note-paths.csv"
       init_vault
       ;;
-    --help)
+    new|n)
+      if ! VAULT_ROOT_FOUND=$(locate_vault_root); then
+        echo "No vault root found in current directory and its parents upto $HOME."
+        echo "Please run 'ztl init' to set a vault root."
+        exit 1
+      fi
+      if [ "$#" -lt 2 ]; then
+        echo "Error: Please provide a filename."
+        echo "Usage: ztl new/n [filename]"
+        exit 1
+      fi 
+      create_new_file "$VAULT_ROOT_FOUND" "$@"
+      ;;
+    help)
       show_help
-      ;;
-    -n|--new)
-      VAULT_DIR="$(find_vault_root || fail "Vault not initialized. Run 'ztl init' at the vault root.")"
-      PATH_CSV="$VAULT_DIR/note-paths.csv"
-      [ "$#" -ge 2 ] || fail "Missing file name"
-      filename="$2"
-      shift 2
-      create_new_file "$filename"
-      ;;
-    -c|--compile)
-      VAULT_DIR="$(find_vault_root || fail "Vault not initialized. Run 'ztl init' at the vault root.")"
-      PATH_CSV="$VAULT_DIR/note-paths.csv"
-      compile_file
       ;;
     *)
       show_help
-      fail "Unknown option: $1"
       ;;
   esac
 }
 
 main "$@"
+
+
+
 
   '';
 }

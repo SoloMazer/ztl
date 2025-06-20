@@ -24,9 +24,8 @@
         devShells.default = with pkgs;
           mkShell {
             buildInputs = [
-              typst
-              tinymist
               ztl
+              typst
             ];
           };
       }
