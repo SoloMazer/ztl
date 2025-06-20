@@ -5,8 +5,6 @@ pkgs.writeShellApplication {
   runtimeInputs = with pkgs; [
     coreutils
     fzf
-    typst
-    tinymist
   ];
 
   text = ''
@@ -21,6 +19,7 @@ Usage: ztl [COMMAND]
 Commands:
   init                    Initialize vault with current directory as vault root
   new/n <filename>        Create new file at working directory
+  rm                      Interactively remove file from vault
   help                    Show this help message
 EOF
 }
@@ -111,7 +110,36 @@ NEW_FILE_BROILERPLATE
   grep -qxF "$relative_csv" "$vault_home/vault.csv" || echo "$relative_csv" >> "$vault_home/vault.csv"
   sort -ubfV "$vault_home/vault.csv" -o "$vault_home/vault.csv"
 
-  echo "Succesfully Added $filename to the vault: $(dirname "$vault_home")."
+  echo "Succesfully added: $filename"
+  echo "to the vault: $(dirname "$vault_home")."
+}
+
+remove_vault_file(){
+  local vault_csv="$1/vault/vault.csv"
+  
+  local selected_file
+  selected_file=$(awk '{print substr($0, 4) "\t" $0}' "$vault_csv" | fzf --delimiter='\t' --with-nth=1 --accept-nth=2)
+  display_selected_file=$(echo "$selected_file" | sed 's/^\.\.\///')
+
+
+  if [ -n "$selected_file" ]; then
+    cd "$1/vault" || return
+    echo "Are you sure you want to remove '$display_selected_file'? (y/n): "
+    read -r confirmation
+
+    if [[ "$confirmation" =~ ^[Yy]$ || -z "$confirmation" ]]; then
+      rm "$selected_file"
+      echo "Successfully deleted: $display_selected_file"
+      
+      # Remove the matching line from vault.csv
+      grep -Fxv "$selected_file" "$vault_csv" > "$vault_csv.tmp" && mv "$vault_csv.tmp" "$vault_csv"
+      echo "Removed link from $vault_csv"
+    else
+      echo "Delection aborted."
+    fi
+  else
+    echo "No file selected."
+  fi
 }
 
 main() {
@@ -125,7 +153,7 @@ main() {
       ;;
     new|n)
       if ! VAULT_ROOT_FOUND=$(locate_vault_root); then
-        echo "No vault root found in current directory and its parents upto $HOME."
+        echo "Vault root not found in current directory or its parents upto $HOME."
         echo "Please run 'ztl init' to set a vault root."
         exit 1
       fi
@@ -135,6 +163,14 @@ main() {
         exit 1
       fi 
       create_new_file "$VAULT_ROOT_FOUND" "$@"
+      ;;
+    rm)
+      if ! VAULT_ROOT_FOUND=$(locate_vault_root); then
+        echo "Vault root not found in current directory or its parents upto $HOME."
+        echo "Please run 'ztl init' to set a vault root."
+        exit 1
+      fi
+      remove_vault_file "$VAULT_ROOT_FOUND"
       ;;
     help)
       show_help
@@ -146,6 +182,7 @@ main() {
 }
 
 main "$@"
+
 
 
 

@@ -26,6 +26,7 @@
             buildInputs = [
               ztl
               typst
+              tinymist
             ];
           };
       }
