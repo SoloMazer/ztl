@@ -5,6 +5,8 @@ pkgs.writeShellApplication {
   runtimeInputs = with pkgs; [
     coreutils
     fzf
+    fd
+    typst
   ];
 
   text = ''
@@ -20,6 +22,7 @@ Commands:
   init                    Initialize vault with current directory as vault root
   new/n <filename>        Create new file at working directory
   rm                      Interactively remove file from vault
+  compile/c               Compile and open selected typst file
   help                    Show this help message
 EOF
 }
@@ -134,11 +137,30 @@ remove_vault_file(){
       # Remove the matching line from vault.csv
       grep -Fxv "$selected_file" "$vault_csv" > "$vault_csv.tmp" && mv "$vault_csv.tmp" "$vault_csv"
       echo "Removed link from $vault_csv"
+      # Add rg log to report broken links here
     else
       echo "Delection aborted."
     fi
   else
     echo "No file selected."
+  fi
+}
+
+compile_selected_file() {
+  local vault_root="$1"
+  cd "$vault_root" || return
+  
+  local selected_file
+  selected_file=$(fd . -e typ --exclude vault | fzf)
+
+  typst watch --root "$vault_root" "$selected_file" --open
+}
+
+vault_not_found() {
+  if ! VAULT_ROOT_FOUND=$(locate_vault_root); then
+    echo "Vault root not found in current directory or its parents upto $HOME."
+    echo "Please run 'ztl init' to set a vault root."
+    exit 1
   fi
 }
 
@@ -152,11 +174,7 @@ main() {
       init_vault
       ;;
     new|n)
-      if ! VAULT_ROOT_FOUND=$(locate_vault_root); then
-        echo "Vault root not found in current directory or its parents upto $HOME."
-        echo "Please run 'ztl init' to set a vault root."
-        exit 1
-      fi
+      vault_not_found
       if [ "$#" -lt 2 ]; then
         echo "Error: Please provide a filename."
         echo "Usage: ztl new/n [filename]"
@@ -165,12 +183,12 @@ main() {
       create_new_file "$VAULT_ROOT_FOUND" "$@"
       ;;
     rm)
-      if ! VAULT_ROOT_FOUND=$(locate_vault_root); then
-        echo "Vault root not found in current directory or its parents upto $HOME."
-        echo "Please run 'ztl init' to set a vault root."
-        exit 1
-      fi
+      vault_not_found
       remove_vault_file "$VAULT_ROOT_FOUND"
+      ;;
+    compile|c)
+      vault_not_found
+      compile_selected_file "$VAULT_ROOT_FOUND"
       ;;
     help)
       show_help
