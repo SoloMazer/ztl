@@ -23,6 +23,7 @@ Commands:
   new/n <filename>        Create new file at working directory
   rm                      Interactively remove file from vault
   compile/c               Compile and open selected typst file
+  repair                  Regenerate vault resources at vault root
   help                    Show this help message
 EOF
 }
@@ -30,11 +31,6 @@ EOF
 # Initialization function
 init_vault() {
 
-  if [ -d "$(pwd)/vault" ]; then
-    echo "Error: Vault is already Initialized."
-    echo "Use 'ztl repair' to regenerate the vault"
-    exit 1
-  fi
 
   # create vault resources
   mkdir "$(pwd)/vault"                   #create a folder to store vault files
@@ -85,6 +81,9 @@ locate_vault_root() {
 create_new_file(){
   local vault_home="$1/vault"
   local filename="$3.typ"
+  local notename
+  notename="$(echo "$3" | awk -F'/' '{print $NF}')"
+
   local relative_csv
   local relative_typ
 
@@ -101,7 +100,7 @@ create_new_file(){
 cat << NEW_FILE_BROILERPLATE > "$filename"
 #import "$relative_typ": *
 #show: vault.new-note.with(
-  name: "note1",
+  name: "$notename",
   //other metadata here
 )
 
@@ -164,6 +163,30 @@ vault_not_found() {
   fi
 }
 
+repair_vault() {
+  local vault_root="$1"
+  echo "Vault Root detected at: $vault_root"
+  echo "Do you want to repair this vault? (y/n):"
+  read -r confirmation
+
+  if [[ "$confirmation" =~ ^[Yy]$ || -z "$confirmation" ]]; then
+    rm -r "$vault_root/vault"
+    cd "$vault_root"
+    init_vault
+
+    fd . -e typ --exclude vault \
+      | sed 's|^\./||' \
+      | awk -v OFS=',' '{ print "../" $0 }' \
+      > "$vault_root/vault/vault.csv"
+
+    echo "Vault repaired successfully."
+    exit 0
+  else
+    echo "Vault repair aborted."
+    exit 1
+  fi
+}
+
 main() {
   if [ "$#" -eq 0 ]; then
     show_help
@@ -171,6 +194,11 @@ main() {
   fi
   case "$1" in
     init)
+      if VAULT_ROOT_FOUND=$(locate_vault_root); then
+        echo "Existing vault root found at: $VAULT_ROOT_FOUND."
+        echo "Nested vaults are not supported, please use the parent vault."
+        exit 1
+      fi
       init_vault
       ;;
     new|n)
@@ -189,6 +217,10 @@ main() {
     compile|c)
       vault_not_found
       compile_selected_file "$VAULT_ROOT_FOUND"
+      ;;
+    repair)
+      vault_not_found
+      repair_vault "$VAULT_ROOT_FOUND"
       ;;
     help)
       show_help
