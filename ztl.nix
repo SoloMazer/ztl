@@ -5,6 +5,7 @@ pkgs.writeShellApplication {
   runtimeInputs = with pkgs; [
     coreutils
     fzf
+    ripgrep
     fd
     typst
   ];
@@ -117,6 +118,7 @@ NEW_FILE_BROILERPLATE
 }
 
 remove_vault_file(){
+  local vault_root="$1"
   local vault_csv="$1/vault/vault.csv"
   
   local selected_file
@@ -130,18 +132,27 @@ remove_vault_file(){
     read -r confirmation
 
     if [[ "$confirmation" =~ ^[Yy]$ || -z "$confirmation" ]]; then
-      rm "$selected_file"
-      echo "Successfully deleted: $display_selected_file"
+    
+      notename="$(basename "$selected_file" .typ)"
       
-      # Remove the matching line from vault.csv
       grep -Fxv "$selected_file" "$vault_csv" > "$vault_csv.tmp" && mv "$vault_csv.tmp" "$vault_csv"
-      echo "Removed link from $vault_csv"
-      # Add rg log to report broken links here
+      rm "$selected_file"
+
+      if cd "$vault_root" && rg -g '!vault/' "#xlink\(name: \"$notename\"\)"; then
+        RED=$(printf '\033[31m')
+        RESET=$(printf '\033[0m')
+        printf '%sBroken links found in above files!%s\n' "$RED" "$RESET"
+      fi
+
+      echo "Successfully deleted: $display_selected_file"
+      exit 0
     else
       echo "Delection aborted."
+      exit 1
     fi
   else
     echo "No file selected."
+    exit 1
   fi
 }
 
