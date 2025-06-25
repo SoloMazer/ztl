@@ -45,6 +45,7 @@ vault_finder() {
     # define vault resources
     VAULT_ROOT="$VAULT_HOME/vault"
     VAULT_TYP="$VAULT_ROOT/vault.typ"
+    VAULT_CONFIG="$VAULT_ROOT/config.typ"
     VAULT_CSV="$VAULT_ROOT/vault.csv"
     return
   }
@@ -86,14 +87,38 @@ init_vault() {
   # create vault resources
   mkdir "$VAULT_ROOT"
   touch "$VAULT_TYP"
+  touch "$VAULT_CONFIG"
   touch "$VAULT_CSV"
 
 # Setup vault.typ with some broilerplate for basalt-lib
 cat << 'VAULT_FILE_BROILERPLATE' > "$VAULT_TYP"
+#import "./config.typ": *
+#import "@preview/basalt-lib:1.0.0": new-vault, xlink, as-branch
+#let vault = new-vault(
+  note-paths: csv("./vault.csv").flatten(),
+  include-from-vault: path => include path,
+  formatters: (
+    // (body, ..sink) => {
+    //   set text(
+    //     fill: fg,
+    //     font: "Libertinus Serif",
+    //     size: 12pt
+    //   )
+    //   set page(fill: bg)
+    //   show heading.where(level: 1): set text(fill: blue)
+    //   show heading.where(level: 2): set text(fill: purple)
+    //   show heading.where(level: 3): set text(fill: yellow)
+    //   show: show-theorion
+    //   body
+    // },
+  )
+)
+VAULT_FILE_BROILERPLATE
 
-// // Define your colorscheme
+cat << 'VAULT_CONFIG_BROILERPLATE' > "$VAULT_CONFIG"
+// Define your colorscheme
 // // I'm using Gruvbox
-// #let fg = rgb("3c3836")
+// #let fg = rgb("282828")
 // #let bg = rgb("fbf1c7")
 // #let red = rgb("cc241d")
 // #let green = rgb("98971a")
@@ -101,51 +126,74 @@ cat << 'VAULT_FILE_BROILERPLATE' > "$VAULT_TYP"
 // #let blue = rgb("458588")
 // #let purple = rgb("b16286")
 // #let aqua = rgb("689d6a")
+// #let orange = rgb("d65d0e")
+// #let gray = rgb("928374")
+
 // // toggle for Dark/Light mode
-// #let dark-mode = true
+// #let dark-mode = false
 // #if dark-mode {
 //   fg = rgb("ebdbb2")
 //   bg = rgb("282828")
 // }
 
-#import "@preview/basalt-lib:1.0.0": new-vault, xlink, as-branch
-#let vault = new-vault(
-  note-paths: csv("./vault.csv").flatten(),
-  include-from-vault: path => include path,
-  formatters: (
-  
-    // (body, ..sink) => {
-    //   set text(fill: fg)
-    //   set page(fill: bg)
-    //   show heading.where(level: 1): set text(fill: blue)
-    //   show heading.where(level: 2): set text(fill: purple)
-    //   show heading.where(level: 3): set text(fill: yellow)
-    //   body
-    // },
-    
-  )
-)
-
+// // Import and customize the theorion package
 // #import "@preview/theorion:0.3.3": *
 // #import cosmos.clouds: *
-// #show: show-theorion
 
-// #let theorem = theorem-box.with(
-//   fill: blue.transparentize(50%),
-//   radius: 10pt
-// ) 
-
+// #let theorem = theorem.with(
+//   fill: blue.transparentize(40%),
+//   stroke: none,
+//   radius: 7pt
+// )
 // #let definition = definition.with(
 //   fill: purple.transparentize(50%),
-//   radius: 10pt
+//   stroke: none,
+//   radius: 7pt
 // )
-
 // #let corollary = corollary.with(
-//   fill: yellow.transparentize(50%),
-//   radius: 10pt
+//   fill: green.transparentize(50%),
+//   stroke: none,
+//   radius: 7pt
 // )
-
-VAULT_FILE_BROILERPLATE
+// #let lemma = lemma.with(
+//   fill: aqua.transparentize(50%),
+//   stroke: none,
+//   radius: 7pt
+// )
+// #let proposition = proposition.with(
+//   fill: yellow.transparentize(50%),
+//   stroke: none,
+//   radius: 7pt
+// )
+// #let axiom = axiom.with(
+//   fill: orange.transparentize(50%),
+//   stroke: none,
+//   radius: 7pt
+// )
+// #let postulate = postulate.with(
+//   fill: red.transparentize(50%),
+//   stroke: none,
+//   radius: 7pt
+// )
+// #let tip = tip-box.with(
+//   fill: green
+// )
+// #let important = important-box.with(
+//   fill: purple
+// )
+// #let warning = warning-box.with(
+//   fill: red
+// )
+// #let remark = remark.with(
+//   fill: blue
+// )
+// #let note = note-box.with(
+//   fill: aqua
+// )
+// #let caution = caution-box.with(
+//   fill: orange
+// )
+VAULT_CONFIG_BROILERPLATE
 
 # Display vault init log to console
 cat << EOF
@@ -296,8 +344,14 @@ repair_vault(){
 
   if [[ "$confirmation" =~ ^[Yy]$ || -z "$confirmation" ]]; then
     cd "$VAULT_HOME"
+    cp "$VAULT_TYP" "$VAULT_HOME"
+    cp "$VAULT_CONFIG" "$VAULT_HOME"
     rm -r "vault"
     init_vault
+    cat "$VAULT_HOME/vault.typ" > "$VAULT_TYP"
+    cat "$VAULT_HOME/config.typ" > "$VAULT_CONFIG"
+    rm "$VAULT_HOME/vault.typ"
+    rm "$VAULT_HOME/config.typ"
     
     fd . -e typ --exclude vault \
       | sed 's|^\./||' \
@@ -307,11 +361,11 @@ repair_vault(){
     sort -ubfV "$VAULT_CSV" -o "$VAULT_CSV"
 
     echo "Vault repaired successfully!"
-    exit 0
   else
     echo "Vault repair aborted."
-    exit 1
   fi
+
+  return
 }
 
 # ------------------------------------------------------ #
