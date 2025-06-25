@@ -46,8 +46,6 @@ vault_finder() {
     VAULT_ROOT="$VAULT_HOME/vault"
     VAULT_TYP="$VAULT_ROOT/vault.typ"
     VAULT_CSV="$VAULT_ROOT/vault.csv"
-    VAULT_SNIPPET="$VAULT_ROOT/snippets.typ"
-    VAULT_TEMPLATE="$VAULT_ROOT/templates"
     return
   }
   
@@ -87,27 +85,67 @@ init_vault() {
   
   # create vault resources
   mkdir "$VAULT_ROOT"
-  mkdir "$VAULT_TEMPLATE"
   touch "$VAULT_TYP"
   touch "$VAULT_CSV"
-  touch "$VAULT_SNIPPET"
 
 # Setup vault.typ with some broilerplate for basalt-lib
-cat << 'VAULT_FILE_BROILERPLATE' > "$(pwd)/vault/vault.typ"
-#import "@preview/basalt-lib:1.0.0": new-vault, xlink, as-branch
+cat << 'VAULT_FILE_BROILERPLATE' > "$VAULT_TYP"
 
+// // Define your colorscheme
+// // I'm using Gruvbox
+// #let fg = rgb("3c3836")
+// #let bg = rgb("fbf1c7")
+// #let red = rgb("cc241d")
+// #let green = rgb("98971a")
+// #let yellow = rgb("d79921")
+// #let blue = rgb("458588")
+// #let purple = rgb("b16286")
+// #let aqua = rgb("689d6a")
+// // toggle for Dark/Light mode
+// #let dark-mode = true
+// #if dark-mode {
+//   fg = rgb("ebdbb2")
+//   bg = rgb("282828")
+// }
+
+#import "@preview/basalt-lib:1.0.0": new-vault, xlink, as-branch
 #let vault = new-vault(
   note-paths: csv("./vault.csv").flatten(),
   include-from-vault: path => include path,
-  formatters: ()
+  formatters: (
+  
+    // (body, ..sink) => {
+    //   set text(fill: fg)
+    //   set page(fill: bg)
+    //   show heading.where(level: 1): set text(fill: blue)
+    //   show heading.where(level: 2): set text(fill: purple)
+    //   show heading.where(level: 3): set text(fill: yellow)
+    //   body
+    // },
+    
+  )
 )
-VAULT_FILE_BROILERPLATE
 
-# Cat some broilerplate code to snippets.typ
-cat << 'VAULT_SNIPPETS_BROILERPLATE' > "$(pwd)/vault/snippets.typ"
-// Define your global snippet varibables here, eg:
-// #let pi = 3.14159
-VAULT_SNIPPETS_BROILERPLATE
+// #import "@preview/theorion:0.3.3": *
+// #import cosmos.clouds: *
+// #show: show-theorion
+
+// #let theorem = theorem-box.with(
+//   fill: blue.transparentize(50%),
+//   radius: 10pt
+// ) 
+
+// #let definition = definition.with(
+//   fill: purple.transparentize(50%),
+//   radius: 10pt
+// )
+
+// #let corollary = corollary.with(
+//   fill: yellow.transparentize(50%),
+//   radius: 10pt
+// )
+
+VAULT_FILE_BROILERPLATE
 
 # Display vault init log to console
 cat << EOF
@@ -150,12 +188,10 @@ create_file(){
   touch "$file"
 
   relative_typ="$(realpath --relative-to="$(dirname "$file_path")" "$VAULT_TYP")"
-  relative_snip="$(realpath --relative-to="$(dirname "$file_path")" "$VAULT_SNIPPET")"
 
 # Setup new file with some broilerplate for basalt-lib
 cat << NEW_FILE_BROILERPLATE > "$file"
 #import "$relative_typ": *
-#import "$relative_snip"
 #show: vault.new-note.with(
   name: "$file_name",
   //other metadata here
