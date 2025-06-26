@@ -23,7 +23,7 @@ I recommend using a terminal text editor with Typst support (like Neovim, Helix,
 ### Usage on non-nix/nixos distros
 
 In principle it is possible to use the bash script to manage your vaults, only extra step is to install the dependencies from your distro's package manager.
-Currently you'll need ripgrep, fd and fzf, but please check runtimeInputs argument for ztl in flake.nix for a detailed list of dependencies.
+Currently you'll need `ripgrep`, `fd` and `fzf`, but please check `runtimeInputs` argument for ztl in `flake.nix` for a detailed list of dependencies.
 You can then run the script just the way you do for other bash scripts for your distro. 
 
 ## Contributing
