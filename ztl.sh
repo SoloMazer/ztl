@@ -1,17 +1,3 @@
-{ pkgs }:
-pkgs.writeShellApplication {
-  name = "ztl";
-
-  runtimeInputs = with pkgs; [
-    coreutils
-    fzf
-    ripgrep
-    fd
-    typst
-  ];
-
-  text = ''
-
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -401,5 +387,3 @@ repair_vault(){
 
 main "$@"
 
-'';
-}

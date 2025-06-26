@@ -20,6 +20,12 @@ nix develop
 ```
 I recommend using a terminal text editor with Typst support (like Neovim, Helix, etc). Once inside the shell, you can use the `ztl` command to manage your vault. Run `ztl help` to list available options.
 
+### Usage on non-nix/nixos distros
+
+In principle it is possible to use the bash script to manage your vaults, only extra step is to install the dependencies from your distro's package manager.
+Currently you'll need ripgrep, fd and fzf, but please check runtimeInputs argument for ztl in flake.nix for a detailed list of dependencies.
+You can then run the script just the way you do for other bash scripts for your distro. 
+
 ## Contributing
 I feel this project solves a very niche problem that is personal to me. Hence, I will be focusing on simple and reliable solutions that work with minimal effort, without leaving loose ends or being overly opinionated.
 Feel free to contact me if you have improvements/feature requests to suggest, I would love to make this utility more useful.  

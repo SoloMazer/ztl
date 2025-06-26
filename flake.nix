@@ -6,21 +6,28 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs =
-    { self
-    , nixpkgs
-    , flake-utils
-    , ...
-    }:
+  outputs = {
+    self,
+    nixpkgs,
+    flake-utils,
+    ...
+  }:
     flake-utils.lib.eachDefaultSystem (
-      system:
-      let
+      system: let
         pkgs = import nixpkgs {
           inherit system;
         };
-        ztl = import ./ztl.nix { inherit pkgs; };
-      in
-      {
+        ztl = pkgs.writeShellApplication {
+          name = "ztl";
+          runtimeInputs = with pkgs; [
+            coreutils
+            fzf
+            ripgrep
+            fd
+          ];
+          text = builtins.readFile ./ztl.sh;
+        };
+      in {
         devShells.default = with pkgs;
           mkShell {
             buildInputs = [
