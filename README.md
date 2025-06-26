@@ -1,5 +1,5 @@
-# mathVault
-This repository stores my personal university notes, all written in [typst](https://typst.app/).  
+# ztl 
+This repository uses nix to build a bash script to manage [typst](https://typst.app/)-powered zettelkasten vaults.  
 The nix flake manages all required dependencies and builds `ztl`, a custom command-line tool for managing the vault.  
 I have used [basalt-lib](https://github.com/GabrielDTB/basalt-lib) typst package to create a zettelkasten structure similar to the popular obsidian app.  
 
@@ -13,24 +13,17 @@ git clone https://github.com/SoloMazer/mathVault.git
 cd mathVault
 ```
 
-2. Start with a Clean Vault (Optional)
-If you wish to remove all the existing notes and vault resources and start with a blank canvas, run:
-```bash
-fd --type d --max-depth 1 --exec rm -rf {}
-```
-
-3. Enter the dev shell
+2. Enter the dev shell
 Run `nix develop` inside the flake directory to fetch dependencies, build `ztl`, and enter a development shell.
 ```bash
 nix develop
 ```
-I recommend using a terminal text editor with Typst support (like Neovim, Helix, etc). Once inside the shell, you can use the `ztl` command to manage your vault effectively. Run `ztl help` to list available options.
+I recommend using a terminal text editor with Typst support (like Neovim, Helix, etc). Once inside the shell, you can use the `ztl` command to manage your vault. Run `ztl help` to list available options.
 
 ## Contributing
-This is a personal vault and is not as polished as professional tools, however if you find any errors or have any suggestions for improvements, feel free to open an issue or pull request.
-
-## License
-All notes here are free to use for non-commercial purposes. If you're a student like me, I hope these notes help you :)
+I feel this project solves a very niche problem that is personal to me. Hence, I will be focusing on simple and reliable solutions that work with minimal effort, without leaving loose ends or being overly opinionated.
+Feel free to contact me if you have improvements/feature requests to suggest, I would love to make this utility more useful.  
 
 ## Acknowledgements
 Super thanks to [Gabe](https://github.com/GabrielDTB) for creating basalt-lib and helping me set it up.
+
