@@ -1,6 +1,7 @@
-*
 !*.nix
 !*.sh
 !flake.lock
-!vault.typ
+!/src
 !README.md
+
+*

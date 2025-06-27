@@ -77,7 +77,7 @@ init_vault() {
 	touch "$VAULT_CSV"
 
 	# Setup vault.typ with some broilerplate for basalt-lib
-	cat "$ZTL_SRC/vault.typ" >"$VAULT_TYP"
+	cat "$src/vault.typ" >"$VAULT_TYP"
 
 	# Display vault init log to console
 	cat <<EOF

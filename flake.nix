@@ -19,6 +19,9 @@
         };
         ztl = pkgs.writeShellApplication {
           name = "ztl";
+          runtimeEnv = {
+            src = "${toString ./src}";
+          };
           runtimeInputs = with pkgs; [
             coreutils
             fzf
@@ -27,15 +30,11 @@
             typst
             sioyek
           ];
-          # source = "./.";
           text = builtins.readFile ./ztl.sh;
         };
       in {
         devShells.default = with pkgs;
           mkShell {
-            shellHook = ''
-              export ZTL_SRC=${./.}
-            '';
             buildInputs = [
               ztl
             ];
