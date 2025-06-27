@@ -76,7 +76,6 @@ init_vault() {
 
 	# Setup vault.typ with some broilerplate for basalt-lib
 	cat <<'VAULT_FILE_BROILERPLATE' >"$VAULT_TYP"
-#import "./config.typ": *
 #import "@preview/basalt-lib:1.0.0": new-vault, xlink, as-branch
 #let vault = new-vault(
   note-paths: csv("./vault.csv").flatten(),
