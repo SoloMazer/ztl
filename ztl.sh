@@ -9,11 +9,11 @@ show_help() {
 Usage: ztl [COMMAND]
 
 Commands:
-  init                            Initialize vault with current directory as vault root
-  new/n <filename>                Create new file at working directory
+  init                            Initialize vault at pwd
+  new/n <filename>                Add new file to vault at pwd 
   rm                              Interactively remove file from vault
-  compile/c                       Compile selected file and its links and open the file
-  repair                          Regenerate vault resources
+  compile/c                       Interactively select and open file from vault
+  repair                          Repair vault resources (global settings are preserved)
   help                            Show this help message
 EOF
 	return
@@ -28,7 +28,6 @@ vault_finder() {
 	current_dir=$(pwd)
 
 	vault_resources() {
-		# define vault resources
 		VAULT_ROOT="$VAULT_HOME/vault"
 		VAULT_TYP="$VAULT_ROOT/vault.typ"
 		VAULT_CSV="$VAULT_ROOT/vault.csv"
@@ -61,7 +60,7 @@ init_vault() {
 	success_cmd() {
 		echo "A vault is already initialized at: $VAULT_HOME."
 		echo "Nested vaults are not supported. Use above vault or choose another directory."
-		exit 1
+		return
 	}
 	failure_cmd() {
 		echo "Initializing your vault..."
@@ -81,18 +80,17 @@ init_vault() {
   note-paths: csv("./vault.csv").flatten(),
   include-from-vault: path => include path,
   formatters: (
-    // check basalt-lib repo for global formatters
+    // refer https://github.com/GabrielDTB/basalt-lib?tab=readme-ov-file#formatting
   )
 )
 VAULT_FILE_BROILERPLATE
 
-	# Display vault init log to console
 	cat <<EOF
 Initialization complete.
-  Vault Home:        $VAULT_HOME
+Vault Home: $VAULT_HOME
 EOF
 
-	return 0
+	return
 }
 
 # ------------------------------------------------------ #
@@ -100,18 +98,19 @@ EOF
 # ------------------------------------------------------ #
 create_file() {
 	success_cmd() {
-		echo ""
+		printf '\n'
+		return
 	}
 	failure_cmd() {
 		echo "Vault is not initialized."
 		echo "Please run 'ztl init' to initialize current directory."
-		exit 1
+		return
 	}
 	vault_finder
-	if [ "$#" -lt 2 ]; then
-		echo "Error: Please provide a filename."
+	if [ "$#" -ne 2 ]; then
+		echo "Please provide filename as a single argument."
 		echo "Usage: ztl new/n [filename]"
-		exit 1
+		return
 	fi
 
 	file="$2.typ"
@@ -120,7 +119,7 @@ create_file() {
 
 	if [ -e "$file_path" ]; then
 		echo "Error: '$file_path' already exists. Choose a different name."
-		exit 1
+		return
 	fi
 
 	mkdir -p "$(dirname "$2")"
@@ -143,7 +142,8 @@ NEW_FILE_BROILERPLATE
 	grep -qxF "$relative_csv" "$VAULT_CSV" || echo "$relative_csv" >>"$VAULT_CSV"
 	sort -ubfV "$VAULT_CSV" -o "$VAULT_CSV"
 
-	echo "Successfully added '$file' to the vault at: $VAULT_HOME"
+	echo "Added '$file' to vault successfully."
+	echo "File location: $VAULT_HOME/$file."
 	return
 }
 
@@ -153,13 +153,21 @@ NEW_FILE_BROILERPLATE
 remove_file() {
 	success_cmd() {
 		printf '\n'
+		return
 	}
 	failure_cmd() {
 		echo "Vault is not initialized."
 		echo "Please run 'ztl init' to initialize current directory."
-		exit 1
+		return
 	}
 	vault_finder
+
+	if [ "$#" -ne 1 ]; then
+		echo "Error: Argument is not required."
+		echo "This command launches an interactive selector."
+		echo "Usage: ztl rm"
+		return
+	fi
 
 	selected_file=$(fd . -e typ --exclude vault --strip-cwd-prefix --base-directory "$VAULT_HOME" | fzf)
 
@@ -186,35 +194,31 @@ remove_file() {
 compile_file() {
 	success_cmd() {
 		printf '\n'
+		return
 	}
 	failure_cmd() {
 		echo "Vault is not initialized."
 		echo "Please run 'ztl init' to initialize current directory."
-		exit 1
+		return
 	}
 
 	vault_finder
 
-	# Select the main file to watch
+	if [ "$#" -ne 1 ]; then
+		echo "Error: Argument is not required."
+		echo "This command launches an interactive selector."
+		echo "Usage: ztl compile/c"
+		return
+	fi
+
 	local selected_file
-	selected_file="$VAULT_HOME/$(fd . -e typ --exclude vault \
-		--strip-cwd-prefix --base-directory "$VAULT_HOME" | fzf)"
-	[[ -z "$selected_file" ]] && echo "No file selected." && exit 1
+	selected_file="$VAULT_HOME/$(fd . -e typ --exclude vault --strip-cwd-prefix --base-directory "$VAULT_HOME" | fzf)"
 
-	# Extract linked note names and compile them
-	while IFS= read -r name; do
-		[[ -z "$name" ]] && continue
-		if path=$(fd "$name.typ" -e typ --exclude vault --base-directory "$VAULT_HOME"); then
-			echo "Compiling link: $name.typ"
-			typst compile --root "$VAULT_HOME" "$VAULT_HOME/$path"
-		else
-			echo "Warning: '$name.typ' not found in vault." >&2
-		fi
-	done < <(
-		rg -oP '#xlink\(name:\s*"\K[^\"]+(?=\")' "$selected_file"
-	)
+	if [[ -z "$selected_file" ]]; then
+		echo "No file selected."
+		return
+	fi
 
-	# Finally, watch the selected file (with open)
 	typst watch --root "$VAULT_HOME" "$selected_file" --open sioyek
 }
 
@@ -226,9 +230,16 @@ repair_vault() {
 	failure_cmd() {
 		echo "Vault is not initialized."
 		echo "Please run 'ztl init' to initialize current directory."
-		exit 1
+		return
 	}
 	vault_finder
+
+	if [ "$#" -ne 1 ]; then
+		echo "Error: Argument is not required."
+		echo "You will be shown a confiramtion prompt."
+		echo "Usage: ztl repair"
+		return
+	fi
 
 	echo "Do you want to repair this vault? (y/n):"
 	read -r confirmation
@@ -262,29 +273,34 @@ repair_vault() {
 main() {
 	if [ "$#" -eq 0 ]; then
 		show_help
-		exit 1
+		exit
 	fi
 	case "$1" in
 	init)
 		init_vault
+		exit
 		;;
 	new | n)
 		create_file "$@"
+		exit
 		;;
 	rm)
-		remove_file
+		remove_file "$@"
+		exit
 		;;
 	compile | c)
-		compile_file
+		compile_file "$@"
+		exit
 		;;
 	repair)
-		repair_vault
+		repair_vault "$@"
+		exit
 		;;
 	help | *)
 		show_help
+		exit
 		;;
 	esac
-	exit 0
 }
 
 main "$@"
