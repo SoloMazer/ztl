@@ -1,7 +1,2 @@
-!*.nix
-!*.sh
-!flake.lock
-!/src
-!README.md
-
-*
+vault/
+notes/
