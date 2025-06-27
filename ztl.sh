@@ -19,6 +19,8 @@ EOF
 	return
 }
 
+viewer=sioyek
+
 # ------------------------------------------------------ #
 #                LOCATE VAULT RESOURCES                  #
 # ------------------------------------------------------ #
@@ -75,7 +77,7 @@ init_vault() {
 	touch "$VAULT_CSV"
 
 	# Setup vault.typ with some broilerplate for basalt-lib
-	cat ./vault.typ >"$VAULT_TYP"
+	cat "$ZTL_SRC/vault.typ" >"$VAULT_TYP"
 
 	# Display vault init log to console
 	cat <<EOF
@@ -206,7 +208,7 @@ compile_file() {
 	)
 
 	# Finally, watch the selected file (with open)
-	typst watch --root "$VAULT_HOME" "$selected_file" --open
+	typst watch --root "$VAULT_HOME" "$selected_file" --open "$viewer"
 }
 
 repair_vault() {

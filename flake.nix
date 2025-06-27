@@ -25,13 +25,17 @@
             ripgrep
             fd
             typst
+            sioyek
           ];
-          source = "./";
-          text = builtins.readFile "./ztl.sh";
+          # source = "./.";
+          text = builtins.readFile ./ztl.sh;
         };
       in {
         devShells.default = with pkgs;
           mkShell {
+            shellHook = ''
+              export ZTL_SRC=${./.}
+            '';
             buildInputs = [
               ztl
             ];
