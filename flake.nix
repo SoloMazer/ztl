@@ -27,7 +27,7 @@
             typst
           ];
           # source = "./.";
-          text = builtins.readFile "./ztl.sh";
+          text = builtins.readFile ./ztl.sh;
         };
       in {
         devShells.default = with pkgs;
