@@ -18,11 +18,30 @@
         pkgs = import nixpkgs {
           inherit system;
         };
+<<<<<<< Updated upstream
         ztl = import ./ztl.nix { inherit pkgs; };
       in
       {
+=======
+        ztl = pkgs.writeShellApplication {
+          name = "ztl";
+          runtimeInputs = with pkgs; [
+            coreutils
+            fzf
+            ripgrep
+            fd
+            typst
+          ];
+          # source = "./.";
+          text = builtins.readFile "./ztl.sh";
+        };
+      in {
+>>>>>>> Stashed changes
         devShells.default = with pkgs;
           mkShell {
+            shellHook = ''
+              export ZTL_SRC=${./.}
+            '';
             buildInputs = [
               ztl
               typst
