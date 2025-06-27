@@ -1,1 +1,6 @@
-*.pdf
+*
+!*.nix
+!*.sh
+!flake.lock
+!vault.typ
+!README.md

@@ -19,6 +19,8 @@ EOF
 	return
 }
 
+viewer=sioyek
+
 # ------------------------------------------------------ #
 #                LOCATE VAULT RESOURCES                  #
 # ------------------------------------------------------ #
@@ -206,7 +208,7 @@ compile_file() {
 	)
 
 	# Finally, watch the selected file (with open)
-	typst watch --root "$VAULT_HOME" "$selected_file" --open
+	typst watch --root "$VAULT_HOME" "$selected_file" --open "$viewer"
 }
 
 repair_vault() {

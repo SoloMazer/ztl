@@ -25,6 +25,7 @@
             ripgrep
             fd
             typst
+            sioyek
           ];
           # source = "./.";
           text = builtins.readFile ./ztl.sh;
