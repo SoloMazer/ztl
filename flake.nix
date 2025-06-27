@@ -24,6 +24,7 @@
             fzf
             ripgrep
             fd
+            typst
           ];
           text = builtins.readFile ./ztl.sh;
         };
@@ -32,8 +33,6 @@
           mkShell {
             buildInputs = [
               ztl
-              typst
-              tinymist
             ];
           };
       }
