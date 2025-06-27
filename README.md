@@ -5,7 +5,7 @@ I have used [basalt-lib](https://github.com/GabrielDTB/basalt-lib) typst package
 
 ## Getting Started
   
-> To use the nix flake and build the `ztl` cli, a working installation of nix with `nix-command` and `flakes` enabled is required. Please find the installation instructions [here](https://nixos.org/download/) and refer the nix manual to enable flakes.
+> To use the nix flake and build the `ztl` cli, a working installation of nix with `nix-command` and `flakes` enabled is required. Please find the installation instructions [here](https://nixos.org/download/) and refer the nix manual to enable nix-command and flakes.
 
 Simply run the following command to enter a devShell.  
 ```bash
@@ -21,8 +21,8 @@ I recommend using a terminal text editor with Typst support (like Neovim, Helix,
 
 1. Clone the repo in your projects folder.
 ```bash
-git clone https://github.com/SoloMazer/mathVault.git
-cd mathVault
+git clone https://github.com/SoloMazer/ztl.git
+cd ztl
 ```
 
 2. Symlink the script to bin and make it executable.
