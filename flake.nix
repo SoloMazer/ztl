@@ -19,10 +19,6 @@
         };
         ztl = pkgs.writeShellApplication {
           name = "ztl";
-          runtimeEnv = {
-            src = "${toString ./src}";
-            viewer = "sioyek";
-          };
           runtimeInputs = with pkgs; [
             coreutils
             fzf

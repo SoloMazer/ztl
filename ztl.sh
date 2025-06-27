@@ -75,7 +75,17 @@ init_vault() {
 	touch "$VAULT_CSV"
 
 	# Setup vault.typ with some broilerplate for basalt-lib
-	cat "$src/vault.typ" >"$VAULT_TYP"
+	cat <<'VAULT_FILE_BROILERPLATE' >"$VAULT_TYP"
+#import "./config.typ": *
+#import "@preview/basalt-lib:1.0.0": new-vault, xlink, as-branch
+#let vault = new-vault(
+  note-paths: csv("./vault.csv").flatten(),
+  include-from-vault: path => include path,
+  formatters: (
+    // check basalt-lib repo for global formatters
+  )
+)
+VAULT_FILE_BROILERPLATE
 
 	# Display vault init log to console
 	cat <<EOF
@@ -206,7 +216,7 @@ compile_file() {
 	)
 
 	# Finally, watch the selected file (with open)
-	typst watch --root "$VAULT_HOME" "$selected_file" --open "$viewer"
+	typst watch --root "$VAULT_HOME" "$selected_file" --open sioyek
 }
 
 repair_vault() {
