@@ -1,5 +1,5 @@
 {
-  description = "Flake to develop a shell with vault dependencies";
+  description = "A flake to build, run and develop ztl";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -10,32 +10,37 @@
     self,
     nixpkgs,
     flake-utils,
-    ...
   }:
-    flake-utils.lib.eachDefaultSystem (
-      system: let
-        pkgs = import nixpkgs {
-          inherit system;
+    flake-utils.lib.eachDefaultSystem (system: let
+      pkgs = import nixpkgs {
+        inherit system;
+      };
+      rustPlatform = pkgs.rustPlatform;
+    in {
+      packages.default = rustPlatform.buildRustPackage {
+        pname = "ztl";
+        version = "0.1.0";
+        src = ./.;
+
+        cargoLock = {
+          lockFile = ./Cargo.lock;
         };
-        ztl = pkgs.writeShellApplication {
-          name = "ztl";
-          runtimeInputs = with pkgs; [
-            coreutils
-            fzf
-            ripgrep
-            fd
-            typst
-            sioyek
-          ];
-          text = builtins.readFile ./ztl.sh;
-        };
-      in {
-        devShells.default = with pkgs;
-          mkShell {
-            buildInputs = [
-              ztl
-            ];
-          };
-      }
-    );
+
+        # cargoBuildFlags = [ "--release" ];
+      };
+
+      apps.default = flake-utils.lib.mkApp {
+        drv = self.packages.${system}.default;
+      };
+
+      devShells.default = pkgs.mkShell {
+        buildInputs = with pkgs; [
+          rustc
+          cargo
+          rust-analyzer
+          clippy
+          rustfmt
+        ];
+      };
+    });
 }
