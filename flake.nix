@@ -26,7 +26,7 @@
           lockFile = ./Cargo.lock;
         };
 
-        # cargoBuildFlags = [ "--release" ];
+        buildType = "release";
       };
 
       apps.default = flake-utils.lib.mkApp {
