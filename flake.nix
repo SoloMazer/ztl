@@ -7,7 +7,6 @@
   };
 
   outputs = {
-    self,
     nixpkgs,
     flake-utils,
     ...
@@ -17,7 +16,7 @@
         pkgs = import nixpkgs {
           inherit system;
         };
-        ztl = pkgs.writeShellApplication {
+        zty = pkgs.writeShellApplication {
           name = "ztl";
           runtimeInputs = with pkgs; [
             coreutils
@@ -27,13 +26,13 @@
             typst
             sioyek
           ];
-          text = builtins.readFile ./ztl.sh;
+          text = builtins.readFile ./zty.sh;
         };
       in {
         devShells.default = with pkgs;
           mkShell {
             buildInputs = [
-              ztl
+              zty
             ];
           };
       }

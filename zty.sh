@@ -6,7 +6,7 @@ set -euo pipefail
 # ------------------------------------------------------ #
 show_help() {
 	cat <<EOF
-Usage: ztl [COMMAND]
+Usage: zty [COMMAND]
 
 Commands:
   init                            Initialize vault at pwd
@@ -103,13 +103,13 @@ create_file() {
 	}
 	failure_cmd() {
 		echo "Vault is not initialized."
-		echo "Please run 'ztl init' to initialize current directory."
+		echo "Please run 'zty init' to initialize current directory."
 		return
 	}
 	vault_finder
 	if [ "$#" -ne 2 ]; then
 		echo "Please provide filename as a single argument."
-		echo "Usage: ztl new/n [filename]"
+		echo "Usage: zty new/n [filename]"
 		return
 	fi
 
@@ -157,7 +157,7 @@ remove_file() {
 	}
 	failure_cmd() {
 		echo "Vault is not initialized."
-		echo "Please run 'ztl init' to initialize current directory."
+		echo "Please run 'zty init' to initialize current directory."
 		return
 	}
 	vault_finder
@@ -165,7 +165,7 @@ remove_file() {
 	if [ "$#" -ne 1 ]; then
 		echo "Error: Argument is not required."
 		echo "This command launches an interactive selector."
-		echo "Usage: ztl rm"
+		echo "Usage: zty rm"
 		return
 	fi
 
@@ -198,7 +198,7 @@ compile_file() {
 	}
 	failure_cmd() {
 		echo "Vault is not initialized."
-		echo "Please run 'ztl init' to initialize current directory."
+		echo "Please run 'zty init' to initialize current directory."
 		return
 	}
 
@@ -207,7 +207,7 @@ compile_file() {
 	if [ "$#" -ne 1 ]; then
 		echo "Error: Argument is not required."
 		echo "This command launches an interactive selector."
-		echo "Usage: ztl compile/c"
+		echo "Usage: zty compile/c"
 		return
 	fi
 
@@ -229,7 +229,7 @@ repair_vault() {
 	}
 	failure_cmd() {
 		echo "Vault is not initialized."
-		echo "Please run 'ztl init' to initialize current directory."
+		echo "Please run 'zty init' to initialize current directory."
 		return
 	}
 	vault_finder
@@ -237,7 +237,7 @@ repair_vault() {
 	if [ "$#" -ne 1 ]; then
 		echo "Error: Argument is not required."
 		echo "You will be shown a confiramtion prompt."
-		echo "Usage: ztl repair"
+		echo "Usage: zty repair"
 		return
 	fi
 
