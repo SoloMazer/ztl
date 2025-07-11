@@ -17,7 +17,7 @@
           inherit system;
         };
         zty = pkgs.writeShellApplication {
-          name = "ztl";
+          name = "zty";
           runtimeInputs = with pkgs; [
             coreutils
             fzf
@@ -29,6 +29,7 @@
           text = builtins.readFile ./zty.sh;
         };
       in {
+        packages.default = zty;
         devShells.default = with pkgs;
           mkShell {
             buildInputs = [
