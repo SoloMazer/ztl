@@ -1,5 +1,5 @@
 {
-  description = "Flake to develop a shell with vault dependencies";
+  description = "A flake to build, run and develop intuita";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -7,35 +7,34 @@
   };
 
   outputs = {
+    self,
     nixpkgs,
     flake-utils,
-    ...
   }:
-    flake-utils.lib.eachDefaultSystem (
-      system: let
-        pkgs = import nixpkgs {
-          inherit system;
+    flake-utils.lib.eachDefaultSystem (system: let
+      pkgs = import nixpkgs {
+        inherit system;
+      };
+    in {
+      packages.default = pkgs.rustPlatform.buildRustPackage {
+        pname = "intuita";
+        version = "0.1.0";
+        src = ./.;
+
+        nativeBuildInputs = with pkgs; [
+          rustc
+          cargo
+        ];
+
+        cargoLock = {
+          lockFile = ./Cargo.lock;
         };
-        zty = pkgs.writeShellApplication {
-          name = "zty";
-          runtimeInputs = with pkgs; [
-            coreutils
-            fzf
-            ripgrep
-            fd
-            typst
-            sioyek
-          ];
-          text = builtins.readFile ./zty.sh;
-        };
-      in {
-        packages.default = zty;
-        devShells.default = with pkgs;
-          mkShell {
-            buildInputs = [
-              zty
-            ];
-          };
-      }
-    );
+
+        buildType = "release";
+      };
+
+      apps.default = flake-utils.lib.mkApp {
+        drv = self.packages.${system}.default;
+      };
+    });
 }

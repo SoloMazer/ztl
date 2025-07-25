@@ -1,0 +1,9 @@
+[package]
+name = "intuita"
+version = "0.1.0"
+# description = "TUI made to manage local zettelkasten typst files"
+authors = ["SoloMazer <solomazer@proton.me>"]
+license = "GPL-3.0"
+edition = "2024"
+
+[dependencies]
